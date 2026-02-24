@@ -1,0 +1,24 @@
+set SetJavaHome=no
+
+load PbjStarter
+
+set ClinGenSecondStep=neutropenia.clingen_annotator_pipeline
+
+add PythonRunner Command="-m $ClinGenSecondStep -rq JavaToPy -sq PyToJava"
+
+// Tokenization etc
+add BsvRegexSectionizer SectionsBsv=org/apache/ctakes/core/sections/NeutropeniaSectionRegex.bsv
+add SentenceDetectorAnnotatorBIO classifierJarPath=/org/apache/ctakes/core/models/sentdetect/model.jar
+add MrsDrSentenceJoiner
+add ParagraphAnnotator
+add ParagraphSentenceFixer
+add ListAnnotator
+add ListParagraphFixer
+add ListSentenceFixer
+
+add PbjJmsSender SendQueue=JavaToPy SendStop=yes
+
+// Get cas from Artemis.
+add PbjReceiverAE ReceiveQueue=PyToJava
+
+add ArtemisStopper

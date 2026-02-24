@@ -1,0 +1,49 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neutropenia"
+version = "7.0.0"
+authors = [
+    { name="BCH Health NLP Lab", email="eli.goldner@childrens.harvard.edu" },
+]
+description = "cTAKES PBJ based harness for the neutropenia clinical genomics extraction LangGraph workflow"
+readme = "README.md"
+requires-python = "~=3.12.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "ruff>=0.15.2",
+    "ty>=0.0.18",
+    "ctakes-pbj~=7.0.0",
+    "neutropenia-clingen-agents",
+]
+
+[project.urls]
+"Homepage" = "https://www.w3.org/Provider/Style/dummy.html"
+"Bug Tracker" = "https://www.w3.org/Provider/Style/dummy.html"
+
+[tool.uv.sources]
+ctakes-pbj = { path = "/Users/etg/Repos/ctakes/ctakes-pbj/src/user/resources/org/apache/ctakes/pbj/ctakes_pbj_py", editable = true }
+neutropenia-clingen-agents = { path = "/Users/etg/Repos/neutropenia_clingen_agents", editable = true }
