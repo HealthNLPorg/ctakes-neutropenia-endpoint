@@ -5,6 +5,8 @@ from collections.abc import Collection
 from ctakes_pbj.component.cas_annotator import CasAnnotator
 from ctakes_pbj.type_system.ctakes_types import DocumentPath
 from neutropenia_clingen_agents.agents.clingen_workflow import build_agent_workflow
+from neutropenia_clingen_agents.agents.state_model import Sentence
+from ctakes_pbj.type_system import ctakes_types
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +28,8 @@ def get_note_basename(cas) -> str:
 class ClinGenAnnotator(CasAnnotator):
     def __init__(
         self,
-        model_id: str,
-        max_new_tokens: int,
-        max_length: int,
-        system_prompt: str,
-        examples_file: str | None,
-        sample_document: str | None,
-        sample_answer: str | None,
-        attributes: Collection[str] | None,
     ):
-        pass
+        self.agentic_workflow = None
 
     def initialize(self):
         self.agentic_workflow = build_agent_workflow(
@@ -50,9 +44,21 @@ class ClinGenAnnotator(CasAnnotator):
         )
 
     def declare_params(self, arg_parser):
-        arg_parser.add_arg("--model_path")
+        arg_parser.add_arg(
+            "--model_id",
+            type=str,
+            default="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        )
+        arg_parser.add_arg("--max_new_tokens", type=int, default=512)
+        arg_parser.add_arg("--max_length", type=int, default=8_000)
+        arg_parser.add_arg("--system_prompt", type=str)
+        arg_parser.add_arg("--examples_file", type=str)
+        arg_parser.add_arg("--sample_document", type=str)
+        arg_parser.add_arg("--sample_answer", type=str)
+        arg_parser.add_arg("--attributes", nargs="+", default={})
 
-    def init_params(self, args):
+    def init_params(self, arg_parser):
+        args = arg_parser.parse_args()
         self.model_id = args.model_id
         self.max_new_tokens = args.max_new_tokens
         self.max_length = args.max_length
@@ -63,4 +69,16 @@ class ClinGenAnnotator(CasAnnotator):
         self.attributes = args.attributes
 
     def process(self, cas):
-        pass
+        if self.agentic_workflow is None:
+            raise ValueError("LangGraph workflow not initialized")
+        for cas_sentence in cas.select(ctakes_types.Sentence):
+            raw_sentence = Sentence(
+                offsets=(cas_sentence.begin, cas_sentence.end),
+                sentence_string=cas_sentence.get_covered_text(),
+                raw_output=None,
+                mention=None,
+            )
+            annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
+            if annotated_sentence.mention is not None:
+                # TODO figure out insertion logic
+                pass
