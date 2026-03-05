@@ -1,12 +1,16 @@
 import logging
 import os
 
-from collections.abc import Collection
 from ctakes_pbj.component.cas_annotator import CasAnnotator
-from ctakes_pbj.type_system.ctakes_types import DocumentPath
+from ctakes_pbj.type_system.ctakes_types import (
+    DocumentPath,
+    SignSymptomMention,
+    LabMention,
+)
 from neutropenia_clingen_agents.agents.clingen_workflow import build_agent_workflow
 from neutropenia_clingen_agents.agents.state_model import Sentence
 from ctakes_pbj.type_system import ctakes_types
+from ctakes_pbj.pbj_tools import add_type
 
 logger = logging.getLogger(__name__)
 
@@ -81,4 +85,54 @@ class ClinGenAnnotator(CasAnnotator):
             annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
             if annotated_sentence.mention is not None:
                 # TODO figure out insertion logic
-                pass
+                gene_offsets = annotated_sentence.mention.gene
+                if gene_offsets is not None:
+                    local_gene_begin, local_gene_end = gene_offsets
+                    add_type(
+                        cas,
+                        SignSymptomMention,
+                        local_gene_begin + cas_sentence.begin,
+                        local_gene_end + cas_sentence.begin,
+                    )
+
+                syntax_n_offsets = annotated_sentence.mention.syntax_n
+                if syntax_n_offsets is not None:
+                    local_syntax_n_begin, local_syntax_n_end = syntax_n_offsets
+                    add_type(
+                        cas,
+                        SignSymptomMention,
+                        local_syntax_n_begin + cas_sentence.begin,
+                        local_syntax_n_end + cas_sentence.begin,
+                    )
+
+                syntax_p_offsets = annotated_sentence.mention.syntax_p
+                if syntax_p_offsets is not None:
+                    local_syntax_p_begin, local_syntax_p_end = syntax_p_offsets
+                    add_type(
+                        cas,
+                        SignSymptomMention,
+                        local_syntax_p_begin + cas_sentence.begin,
+                        local_syntax_p_end + cas_sentence.begin,
+                    )
+
+                vaf_offsets = annotated_sentence.mention.vaf
+                if vaf_offsets is not None:
+                    local_vaf_begin, local_vaf_end = vaf_offsets
+                    add_type(
+                        cas,
+                        LabMention,
+                        local_vaf_begin + cas_sentence.begin,
+                        local_vaf_end + cas_sentence.begin,
+                    )
+
+                variant_type_offsets = annotated_sentence.mention.variant_type
+                if variant_type_offsets is not None:
+                    local_variant_type_begin, local_variant_type_end = (
+                        variant_type_offsets
+                    )
+                    add_type(
+                        cas,
+                        LabMention,
+                        local_variant_type_begin + cas_sentence.begin,
+                        local_variant_type_end + cas_sentence.begin,
+                    )
