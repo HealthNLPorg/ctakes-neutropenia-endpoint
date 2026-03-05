@@ -1,0 +1,19 @@
+services:
+
+  dphe-rt:
+    build:
+      context: .
+    image: dphe-np:0.1.0
+    container_name: dphe-np
+    volumes:
+      - "./input:/usr/src/app/input"
+      - "./processing:/usr/src/app/processing"
+      - "./output:/usr/src/app/output"
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
