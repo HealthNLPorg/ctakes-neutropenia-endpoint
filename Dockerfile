@@ -37,8 +37,8 @@ RUN curl -fsSL https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/bina
     mv /usr/share/apache-maven-$MAVEN_VERSION /usr/share/maven && \
     ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
-# RUN python -m pip install -U pip
-# RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
+RUN python -m pip install -U pip
+RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 
 # RUN curl -LO https://archive.apache.org/dist/artemis/artemis/2.51.0/apache-artemis-2.51.0-bin.zip && \
 RUN unzip apache-artemis-2.51.0-bin.zip && \
@@ -54,7 +54,7 @@ ENV M2 $M2_HOME/bin
 ENV PATH $M2:$PATH
 
 RUN --mount=type=cache,target=/root/.m2 mvn clean package
-
+RUN python tests.py
 CMD ["java", "-cp", "target/ctakes-neutropenia-endpoint-7.0.0-SNAPSHOT-jar-with-dependencies.jar", "org.apache.ctakes.core.pipeline.PiperFileRunner", "-p", "org/apache/ctakes/neutropenia/pipeline/ClingenAnnotator", "-i", "/usr/src/app/input", "-o", "/usr/src/app/output", "-a", "/usr/src/app/mybroker", "-v", "/usr/bin/python"]
 
 
