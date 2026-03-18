@@ -4,6 +4,8 @@ set SetJavaHome=no
 
 load PbjStarter
 
+add PythonRunner Command="-m pip install resources/org/apache/ctakes/neutropenia/neutropenia_py" Wait=yes
+
 set ClinGenSecondStep=neutropenia.clingen_annotator_pipeline
 
 add PythonRunner Command="-m $ClinGenSecondStep -rq JavaToPy -sq PyToJava"

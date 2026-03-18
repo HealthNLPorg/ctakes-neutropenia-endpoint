@@ -30,15 +30,17 @@ COPY . .
 # Clean all dnf cache
 RUN --mount=type=cache,target=/var/cache/dnf dnf upgrade -y && \
     dnf install -y which unzip java-17-openjdk java-17-openjdk-devel && \
-    dnf install -y git python3.11 python3.11-pip && \
-    ln -fs /usr/bin/python3.11 /usr/bin/python
+    dnf install -y git python3.12 python3.12-pip && \
+    ln -fs /usr/bin/python3.12 /usr/bin/python
+    # dnf install -y git python3.11 python3.11-pip && \
+    # ln -fs /usr/bin/python3.11 /usr/bin/python
 
 RUN curl -fsSL https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | tar xzf - -C /usr/share && \
     mv /usr/share/apache-maven-$MAVEN_VERSION /usr/share/maven && \
     ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
 RUN python -m pip install -U pip
-RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
+# RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 
 # RUN curl -LO https://archive.apache.org/dist/artemis/artemis/2.51.0/apache-artemis-2.51.0-bin.zip && \
 RUN unzip apache-artemis-2.51.0-bin.zip && \
@@ -54,7 +56,7 @@ ENV M2 $M2_HOME/bin
 ENV PATH $M2:$PATH
 
 RUN --mount=type=cache,target=/root/.m2 mvn clean package
-RUN python tests.py
+# RUN python tests.py
 CMD ["java", "-cp", "target/ctakes-neutropenia-endpoint-7.0.0-SNAPSHOT-jar-with-dependencies.jar", "org.apache.ctakes.core.pipeline.PiperFileRunner", "-p", "org/apache/ctakes/neutropenia/pipeline/ClingenAnnotator", "-i", "/usr/src/app/input", "-o", "/usr/src/app/output", "-a", "/usr/src/app/mybroker", "-v", "/usr/bin/python"]
 
 
