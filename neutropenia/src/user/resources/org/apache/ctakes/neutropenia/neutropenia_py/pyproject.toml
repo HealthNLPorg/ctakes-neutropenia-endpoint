@@ -27,7 +27,7 @@ authors = [
 ]
 description = "cTAKES PBJ based harness for the neutropenia clinical genomics extraction LangGraph workflow"
 readme = "README.md"
-requires-python = "~=3.12.0"
+requires-python = ">=3.12.0, <3.13"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -44,6 +44,6 @@ dependencies = [
 "Homepage" = "https://www.w3.org/Provider/Style/dummy.html"
 "Bug Tracker" = "https://www.w3.org/Provider/Style/dummy.html"
 
-# [tool.uv.sources]
-# ctakes-pbj = { path = "/home/etg/Repos/ctakes/ctakes-pbj/src/user/resources/org/apache/ctakes/pbj/ctakes_pbj_py", editable = true }
+[tool.uv.sources]
+ctakes-pbj = { path = "/home/etg/Repos/ctakes/ctakes-pbj/src/user/resources/org/apache/ctakes/pbj/ctakes_pbj_py", editable = true }
 # neutropenia-clingen-agents = { path = "/home/etg/Repos/neutropenia_clingen_agents", editable = true }
