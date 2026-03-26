@@ -10,7 +10,7 @@ from ctakes_pbj.type_system.ctakes_types import (
 from neutropenia_clingen_agents.agents.clingen_workflow import build_agent_workflow
 from neutropenia_clingen_agents.agents.state_model import Sentence
 from ctakes_pbj.type_system import ctakes_types
-from ctakes_pbj.pbj_tools import add_type
+from ctakes_pbj.pbj_tools.create_type import add_type
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,6 @@ class ClinGenAnnotator(CasAnnotator):
         self.agentic_workflow = build_agent_workflow(
             model_id=self.model_id,
             max_new_tokens=self.max_new_tokens,
-            max_length=self.max_length,
             system_prompt=self.system_prompt,
             examples_file=self.examples_file,
             sample_document=self.sample_document,
@@ -55,15 +54,12 @@ class ClinGenAnnotator(CasAnnotator):
             default="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
         )
         arg_parser.add_arg("--max_new_tokens", type=int, default=512)
-        arg_parser.add_arg("--max_length", type=int, default=8_000)
         arg_parser.add_arg("--system_prompt", type=str)
         arg_parser.add_arg("--examples_file", type=str)
         arg_parser.add_arg("--sample_document", type=str)
         arg_parser.add_arg("--sample_answer", type=str)
-        arg_parser.add_arg("--attributes", nargs="+", default={})
 
-    def init_params(self, arg_parser):
-        args = arg_parser.parse_args()
+    def init_params(self, args):
         self.model_id = args.model_id
         self.max_new_tokens = args.max_new_tokens
         self.max_length = args.max_length
@@ -71,7 +67,6 @@ class ClinGenAnnotator(CasAnnotator):
         self.examples_file = args.examples_file
         self.sample_document = args.sample_document
         self.sample_answer = args.sample_answer
-        self.attributes = args.attributes
 
     def process(self, cas):
         if self.agentic_workflow is None:
