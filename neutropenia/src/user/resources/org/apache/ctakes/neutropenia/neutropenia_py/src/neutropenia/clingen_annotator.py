@@ -40,11 +40,11 @@ class ClinGenAnnotator(CasAnnotator):
         self.agentic_workflow = build_agent_workflow(
             model_id=self.model_id,
             max_new_tokens=self.max_new_tokens,
-            system_prompt=self.system_prompt,
-            examples_file=self.examples_file,
-            sample_document=self.sample_document,
-            sample_answer=self.sample_answer,
-            attributes=self.attributes,
+            # system_prompt=self.system_prompt,
+            # examples_file=self.examples_file,
+            # sample_document=self.sample_document,
+            # sample_answer=self.sample_answer,
+            # attributes=self.attributes,
         )
 
     def declare_params(self, arg_parser):
@@ -54,19 +54,20 @@ class ClinGenAnnotator(CasAnnotator):
             default="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
         )
         arg_parser.add_arg("--max_new_tokens", type=int, default=512)
-        arg_parser.add_arg("--system_prompt", type=str)
-        arg_parser.add_arg("--examples_file", type=str)
-        arg_parser.add_arg("--sample_document", type=str)
-        arg_parser.add_arg("--sample_answer", type=str)
+        # arg_parser.add_arg("--system_prompt", type=str)
+        # arg_parser.add_arg("--examples_file", type=str)
+        # arg_parser.add_arg("--sample_document", type=str)
+        # arg_parser.add_arg("--sample_answer", type=str)
 
-    def init_params(self, args):
+    def init_params(self, arg_parser):
+        # forgot this arg_parser is a wrapper from PBJ
+        args = arg_parser.get_args()
         self.model_id = args.model_id
         self.max_new_tokens = args.max_new_tokens
-        self.max_length = args.max_length
-        self.system_prompt = args.system_prompt
-        self.examples_file = args.examples_file
-        self.sample_document = args.sample_document
-        self.sample_answer = args.sample_answer
+        # self.system_prompt = args.system_prompt
+        # self.examples_file = args.examples_file
+        # self.sample_document = args.sample_document
+        # self.sample_answer = args.sample_answer
 
     def process(self, cas):
         if self.agentic_workflow is None:
