@@ -8,7 +8,6 @@ from ctakes_pbj.type_system.ctakes_types import (
     LabMention,
 )
 from neutropenia_clingen_agents.agents.clingen_workflow import (
-    build_agent_workflow,
     quickstart,
 )
 from neutropenia_clingen_agents.agents.state_model import Sentence
@@ -36,44 +35,14 @@ class ClinGenAnnotator(CasAnnotator):
     def __init__(
         self,
     ):
-        print("In __init__")
         self.agentic_workflow = None
 
     def initialize(self):
-        self.agentic_workflow = quickstart()  # build_agent_workflow(
-        # model_id="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
-        # max_new_tokens=512,
-        # system_prompt=self.system_prompt,
-        # examples_file=self.examples_file,
-        # sample_document=self.sample_document,
-        # sample_answer=self.sample_answer,
-        # attributes=self.attributes,
-        # )
-
-    # def declare_params(self, arg_parser):
-    #     arg_parser.add_arg(
-    #         "--model_id",
-    #         type=str,
-    #         default="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
-    #     )
-    #     arg_parser.add_arg("--max_new_tokens", type=int, default=512)
-    #     # arg_parser.add_arg("--system_prompt", type=str)
-    #     # arg_parser.add_arg("--examples_file", type=str)
-    #     # arg_parser.add_arg("--sample_document", type=str)
-    #     # arg_parser.add_arg("--sample_answer", type=str)
-
-    # # def init_params(self, arg_parser):
-    # def init_params(self, args):
-    #     # forgot this arg_parser is a wrapper from PBJ
-    #     # args = arg_parser.get_args()
-    #     self.model_id = args.model_id
-    #     self.max_new_tokens = args.max_new_tokens
-    # self.system_prompt = args.system_prompt
-    # self.examples_file = args.examples_file
-    # self.sample_document = args.sample_document
-    # self.sample_answer = args.sample_answer
+        self.agentic_workflow = quickstart()
 
     def process(self, cas):
+        sign_symptom_mention_type = cas.typesystem.get_type(SignSymptomMention)
+        lab_mention_type = cas.typesystem.get_type(LabMention)
         if self.agentic_workflow is None:
             raise ValueError("LangGraph workflow not initialized")
         for cas_sentence in cas.select(ctakes_types.Sentence):
@@ -84,56 +53,57 @@ class ClinGenAnnotator(CasAnnotator):
                 mention=None,
             )
             annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
-            if annotated_sentence.mention is not None:
+            mention = annotated_sentence.get("mention")
+            if mention is not None:
                 # TODO figure out insertion logic
-                gene_offsets = annotated_sentence.mention.gene
+                gene_offsets = mention.gene
                 if gene_offsets is not None:
                     local_gene_begin, local_gene_end = gene_offsets
                     add_type(
                         cas,
-                        SignSymptomMention,
+                        sign_symptom_mention_type,
                         local_gene_begin + cas_sentence.begin,
                         local_gene_end + cas_sentence.begin,
                     )
 
-                syntax_n_offsets = annotated_sentence.mention.syntax_n
+                syntax_n_offsets = mention.syntax_n
                 if syntax_n_offsets is not None:
                     local_syntax_n_begin, local_syntax_n_end = syntax_n_offsets
                     add_type(
                         cas,
-                        SignSymptomMention,
+                        sign_symptom_mention_type,
                         local_syntax_n_begin + cas_sentence.begin,
                         local_syntax_n_end + cas_sentence.begin,
                     )
 
-                syntax_p_offsets = annotated_sentence.mention.syntax_p
+                syntax_p_offsets = mention.syntax_p
                 if syntax_p_offsets is not None:
                     local_syntax_p_begin, local_syntax_p_end = syntax_p_offsets
                     add_type(
                         cas,
-                        SignSymptomMention,
+                        sign_symptom_mention_type,
                         local_syntax_p_begin + cas_sentence.begin,
                         local_syntax_p_end + cas_sentence.begin,
                     )
 
-                vaf_offsets = annotated_sentence.mention.vaf
+                vaf_offsets = mention.vaf
                 if vaf_offsets is not None:
                     local_vaf_begin, local_vaf_end = vaf_offsets
                     add_type(
                         cas,
-                        LabMention,
+                        lab_mention_type,
                         local_vaf_begin + cas_sentence.begin,
                         local_vaf_end + cas_sentence.begin,
                     )
 
-                variant_type_offsets = annotated_sentence.mention.variant_type
+                variant_type_offsets = mention.variant_type
                 if variant_type_offsets is not None:
                     local_variant_type_begin, local_variant_type_end = (
                         variant_type_offsets
                     )
                     add_type(
                         cas,
-                        LabMention,
+                        lab_mention_type,
                         local_variant_type_begin + cas_sentence.begin,
                         local_variant_type_end + cas_sentence.begin,
                     )
