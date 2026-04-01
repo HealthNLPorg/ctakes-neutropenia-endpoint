@@ -26,4 +26,8 @@ add PbjJmsSender SendQueue=JavaToPy SendStop=yes
 // Get cas from Artemis.
 add PbjReceiverAE ReceiveQueue=PyToJava
 
+// Writers
+add SemanticTableFileWriter SubDirectory=semantic_table
+add pretty.plaintext.PrettyTextWriterFit SubDirectory=pretty_text
+
 add ArtemisStopper
