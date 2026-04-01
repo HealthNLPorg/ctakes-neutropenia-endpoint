@@ -7,7 +7,10 @@ from ctakes_pbj.type_system.ctakes_types import (
     SignSymptomMention,
     LabMention,
 )
-from neutropenia_clingen_agents.agents.clingen_workflow import build_agent_workflow
+from neutropenia_clingen_agents.agents.clingen_workflow import (
+    build_agent_workflow,
+    quickstart,
+)
 from neutropenia_clingen_agents.agents.state_model import Sentence
 from ctakes_pbj.type_system import ctakes_types
 from ctakes_pbj.pbj_tools.create_type import add_type
@@ -37,37 +40,38 @@ class ClinGenAnnotator(CasAnnotator):
         self.agentic_workflow = None
 
     def initialize(self):
-        self.agentic_workflow = build_agent_workflow(
-            model_id=self.model_id,
-            max_new_tokens=self.max_new_tokens,
-            # system_prompt=self.system_prompt,
-            # examples_file=self.examples_file,
-            # sample_document=self.sample_document,
-            # sample_answer=self.sample_answer,
-            # attributes=self.attributes,
-        )
+        self.agentic_workflow = quickstart()  # build_agent_workflow(
+        # model_id="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        # max_new_tokens=512,
+        # system_prompt=self.system_prompt,
+        # examples_file=self.examples_file,
+        # sample_document=self.sample_document,
+        # sample_answer=self.sample_answer,
+        # attributes=self.attributes,
+        # )
 
-    def declare_params(self, arg_parser):
-        arg_parser.add_arg(
-            "--model_id",
-            type=str,
-            default="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
-        )
-        arg_parser.add_arg("--max_new_tokens", type=int, default=512)
-        # arg_parser.add_arg("--system_prompt", type=str)
-        # arg_parser.add_arg("--examples_file", type=str)
-        # arg_parser.add_arg("--sample_document", type=str)
-        # arg_parser.add_arg("--sample_answer", type=str)
+    # def declare_params(self, arg_parser):
+    #     arg_parser.add_arg(
+    #         "--model_id",
+    #         type=str,
+    #         default="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+    #     )
+    #     arg_parser.add_arg("--max_new_tokens", type=int, default=512)
+    #     # arg_parser.add_arg("--system_prompt", type=str)
+    #     # arg_parser.add_arg("--examples_file", type=str)
+    #     # arg_parser.add_arg("--sample_document", type=str)
+    #     # arg_parser.add_arg("--sample_answer", type=str)
 
-    def init_params(self, arg_parser):
-        # forgot this arg_parser is a wrapper from PBJ
-        args = arg_parser.get_args()
-        self.model_id = args.model_id
-        self.max_new_tokens = args.max_new_tokens
-        # self.system_prompt = args.system_prompt
-        # self.examples_file = args.examples_file
-        # self.sample_document = args.sample_document
-        # self.sample_answer = args.sample_answer
+    # # def init_params(self, arg_parser):
+    # def init_params(self, args):
+    #     # forgot this arg_parser is a wrapper from PBJ
+    #     # args = arg_parser.get_args()
+    #     self.model_id = args.model_id
+    #     self.max_new_tokens = args.max_new_tokens
+    # self.system_prompt = args.system_prompt
+    # self.examples_file = args.examples_file
+    # self.sample_document = args.sample_document
+    # self.sample_answer = args.sample_answer
 
     def process(self, cas):
         if self.agentic_workflow is None:
