@@ -8,6 +8,7 @@ from ctakes_pbj.type_system.ctakes_types import (
     DocumentPath,
     SignSymptomMention,
     LabMention,
+    Relation,
 )
 from neutropenia_clingen_agents.agents.clingen_workflow import (
     quickstart,
@@ -67,6 +68,7 @@ class ClinGenAnnotator(CasAnnotator):
     ) -> None:
         sign_symptom_mention_type = cas.typesystem.get_type(SignSymptomMention)
         lab_mention_type = cas.typesystem.get_type(LabMention)
+        relation_type = cas.typesystem.get_type(Relation)
         gene = (
             add_type(
                 cas,
@@ -126,7 +128,7 @@ class ClinGenAnnotator(CasAnnotator):
         if syntax_n is not None:
             create_relation(
                 cas=cas,
-                relation_type=ctakes_types.Relation,
+                relation_type=relation_type,
                 category="syntax_n",
                 source=gene,
                 target=syntax_n,
@@ -135,7 +137,7 @@ class ClinGenAnnotator(CasAnnotator):
         if syntax_p is not None:
             create_relation(
                 cas=cas,
-                relation_type=ctakes_types.Relation,
+                relation_type=relation_type,
                 category="syntax_p",
                 source=gene,
                 target=syntax_p,
@@ -143,7 +145,7 @@ class ClinGenAnnotator(CasAnnotator):
         if vaf is not None:
             create_relation(
                 cas=cas,
-                relation_type=ctakes_types.Relation,
+                relation_type=relation_type,
                 category="vaf",
                 source=gene,
                 target=vaf,
@@ -151,7 +153,7 @@ class ClinGenAnnotator(CasAnnotator):
         if variant_type is not None:
             create_relation(
                 cas=cas,
-                relation_type=ctakes_types.Relation,
+                relation_type=relation_type,
                 category="variant_type",
                 source=gene,
                 target=variant_type,
