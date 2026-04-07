@@ -45,65 +45,68 @@ class ClinGenAnnotator(CasAnnotator):
         lab_mention_type = cas.typesystem.get_type(LabMention)
         if self.agentic_workflow is None:
             raise ValueError("LangGraph workflow not initialized")
-        for cas_sentence in cas.select(ctakes_types.Sentence):
-            raw_sentence = Sentence(
-                offsets=(cas_sentence.begin, cas_sentence.end),
-                sentence_string=cas_sentence.get_covered_text(),
-                raw_output=None,
-                mention=None,
-            )
-            annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
-            mention = annotated_sentence.get("mention")
-            if mention is not None:
-                # TODO figure out insertion logic
-                gene_offsets = mention.gene
-                if gene_offsets is not None:
-                    local_gene_begin, local_gene_end = gene_offsets
-                    add_type(
-                        cas,
-                        sign_symptom_mention_type,
-                        local_gene_begin + cas_sentence.begin,
-                        local_gene_end + cas_sentence.begin,
+        for section in cas.select(ctakes_types.Segment):
+            section_id = getattr(section, "id")
+            if isinstance(section_id, str) and section_id.startswith("RELEVANT"):
+                for cas_sentence in cas.select_covered(ctakes_types.Sentence, section):
+                    raw_sentence = Sentence(
+                        offsets=(cas_sentence.begin, cas_sentence.end),
+                        sentence_string=cas_sentence.get_covered_text(),
+                        raw_output=None,
+                        mention=None,
                     )
+                    annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
+                    mention = annotated_sentence.get("mention")
+                    if mention is not None:
+                        # TODO figure out insertion logic
+                        gene_offsets = mention.gene
+                        if gene_offsets is not None:
+                            local_gene_begin, local_gene_end = gene_offsets
+                            add_type(
+                                cas,
+                                sign_symptom_mention_type,
+                                local_gene_begin + cas_sentence.begin,
+                                local_gene_end + cas_sentence.begin,
+                            )
 
-                syntax_n_offsets = mention.syntax_n
-                if syntax_n_offsets is not None:
-                    local_syntax_n_begin, local_syntax_n_end = syntax_n_offsets
-                    add_type(
-                        cas,
-                        sign_symptom_mention_type,
-                        local_syntax_n_begin + cas_sentence.begin,
-                        local_syntax_n_end + cas_sentence.begin,
-                    )
+                        syntax_n_offsets = mention.syntax_n
+                        if syntax_n_offsets is not None:
+                            local_syntax_n_begin, local_syntax_n_end = syntax_n_offsets
+                            add_type(
+                                cas,
+                                sign_symptom_mention_type,
+                                local_syntax_n_begin + cas_sentence.begin,
+                                local_syntax_n_end + cas_sentence.begin,
+                            )
 
-                syntax_p_offsets = mention.syntax_p
-                if syntax_p_offsets is not None:
-                    local_syntax_p_begin, local_syntax_p_end = syntax_p_offsets
-                    add_type(
-                        cas,
-                        sign_symptom_mention_type,
-                        local_syntax_p_begin + cas_sentence.begin,
-                        local_syntax_p_end + cas_sentence.begin,
-                    )
+                        syntax_p_offsets = mention.syntax_p
+                        if syntax_p_offsets is not None:
+                            local_syntax_p_begin, local_syntax_p_end = syntax_p_offsets
+                            add_type(
+                                cas,
+                                sign_symptom_mention_type,
+                                local_syntax_p_begin + cas_sentence.begin,
+                                local_syntax_p_end + cas_sentence.begin,
+                            )
 
-                vaf_offsets = mention.vaf
-                if vaf_offsets is not None:
-                    local_vaf_begin, local_vaf_end = vaf_offsets
-                    add_type(
-                        cas,
-                        lab_mention_type,
-                        local_vaf_begin + cas_sentence.begin,
-                        local_vaf_end + cas_sentence.begin,
-                    )
+                        vaf_offsets = mention.vaf
+                        if vaf_offsets is not None:
+                            local_vaf_begin, local_vaf_end = vaf_offsets
+                            add_type(
+                                cas,
+                                lab_mention_type,
+                                local_vaf_begin + cas_sentence.begin,
+                                local_vaf_end + cas_sentence.begin,
+                            )
 
-                variant_type_offsets = mention.variant_type
-                if variant_type_offsets is not None:
-                    local_variant_type_begin, local_variant_type_end = (
-                        variant_type_offsets
-                    )
-                    add_type(
-                        cas,
-                        lab_mention_type,
-                        local_variant_type_begin + cas_sentence.begin,
-                        local_variant_type_end + cas_sentence.begin,
-                    )
+                        variant_type_offsets = mention.variant_type
+                        if variant_type_offsets is not None:
+                            local_variant_type_begin, local_variant_type_end = (
+                                variant_type_offsets
+                            )
+                            add_type(
+                                cas,
+                                lab_mention_type,
+                                local_variant_type_begin + cas_sentence.begin,
+                                local_variant_type_end + cas_sentence.begin,
+                            )
