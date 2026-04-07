@@ -29,5 +29,6 @@ add PbjReceiverAE ReceiveQueue=PyToJava
 // Writers
 add SemanticTableFileWriter SubDirectory=semantic_table
 add pretty.plaintext.PrettyTextWriterFit SubDirectory=pretty_text
+add pretty.html.HtmlTextWriter SubDirectory=html
 
 add ArtemisStopper

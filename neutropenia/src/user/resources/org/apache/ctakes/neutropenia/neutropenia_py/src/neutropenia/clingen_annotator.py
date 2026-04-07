@@ -1,3 +1,5 @@
+from typing import Any
+from collections.abc import Iterable, Mapping
 import logging
 import os
 
@@ -10,9 +12,10 @@ from ctakes_pbj.type_system.ctakes_types import (
 from neutropenia_clingen_agents.agents.clingen_workflow import (
     quickstart,
 )
-from neutropenia_clingen_agents.agents.state_model import Sentence
+from neutropenia_clingen_agents.agents.state_model import Sentence, ClinGenMention
 from ctakes_pbj.type_system import ctakes_types
 from ctakes_pbj.pbj_tools.create_type import add_type
+from ctakes_pbj.pbj_tools.create_relation import create_relation
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +43,11 @@ class ClinGenAnnotator(CasAnnotator):
     def initialize(self):
         self.agentic_workflow = quickstart()
 
-    def process(self, cas):
-        sign_symptom_mention_type = cas.typesystem.get_type(SignSymptomMention)
-        lab_mention_type = cas.typesystem.get_type(LabMention)
+    def get_annotated_sentences(self, cas) -> Iterable[Mapping[str, Any]]:
         if self.agentic_workflow is None:
             raise ValueError("LangGraph workflow not initialized")
         for section in cas.select(ctakes_types.Segment):
-            section_id = getattr(section, "id")
+            section_id = getattr(section, "id", None)
             if isinstance(section_id, str) and section_id.startswith("RELEVANT"):
                 for cas_sentence in cas.select_covered(ctakes_types.Sentence, section):
                     raw_sentence = Sentence(
@@ -58,55 +59,117 @@ class ClinGenAnnotator(CasAnnotator):
                     annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
                     mention = annotated_sentence.get("mention")
                     if mention is not None:
-                        # TODO figure out insertion logic
-                        gene_offsets = mention.gene
-                        if gene_offsets is not None:
-                            local_gene_begin, local_gene_end = gene_offsets
-                            add_type(
-                                cas,
-                                sign_symptom_mention_type,
-                                local_gene_begin + cas_sentence.begin,
-                                local_gene_end + cas_sentence.begin,
-                            )
+                        yield annotated_sentence
 
-                        syntax_n_offsets = mention.syntax_n
-                        if syntax_n_offsets is not None:
-                            local_syntax_n_begin, local_syntax_n_end = syntax_n_offsets
-                            add_type(
-                                cas,
-                                sign_symptom_mention_type,
-                                local_syntax_n_begin + cas_sentence.begin,
-                                local_syntax_n_end + cas_sentence.begin,
-                            )
+    @staticmethod
+    def insert_clingen_mention(
+        cas, mention: ClinGenMention, sentence_begin: int
+    ) -> None:
+        sign_symptom_mention_type = cas.typesystem.get_type(SignSymptomMention)
+        lab_mention_type = cas.typesystem.get_type(LabMention)
+        gene = (
+            add_type(
+                cas,
+                sign_symptom_mention_type,
+                mention.gene[0] + sentence_begin,
+                mention.gene[1] + sentence_begin,
+            )
+            if mention.gene is not None
+            else None
+        )
+        syntax_n = (
+            add_type(
+                cas,
+                sign_symptom_mention_type,
+                mention.syntax_n[0] + sentence_begin,
+                mention.syntax_n[1] + sentence_begin,
+            )
+            if mention.syntax_n is not None
+            else None
+        )
 
-                        syntax_p_offsets = mention.syntax_p
-                        if syntax_p_offsets is not None:
-                            local_syntax_p_begin, local_syntax_p_end = syntax_p_offsets
-                            add_type(
-                                cas,
-                                sign_symptom_mention_type,
-                                local_syntax_p_begin + cas_sentence.begin,
-                                local_syntax_p_end + cas_sentence.begin,
-                            )
+        syntax_p = (
+            add_type(
+                cas,
+                sign_symptom_mention_type,
+                mention.syntax_p[0] + sentence_begin,
+                mention.syntax_p[1] + sentence_begin,
+            )
+            if mention.syntax_p is not None
+            else None
+        )
 
-                        vaf_offsets = mention.vaf
-                        if vaf_offsets is not None:
-                            local_vaf_begin, local_vaf_end = vaf_offsets
-                            add_type(
-                                cas,
-                                lab_mention_type,
-                                local_vaf_begin + cas_sentence.begin,
-                                local_vaf_end + cas_sentence.begin,
-                            )
+        vaf = (
+            add_type(
+                cas,
+                lab_mention_type,
+                mention.vaf[0] + sentence_begin,
+                mention.vaf[1] + sentence_begin,
+            )
+            if mention.vaf is not None
+            else None
+        )
 
-                        variant_type_offsets = mention.variant_type
-                        if variant_type_offsets is not None:
-                            local_variant_type_begin, local_variant_type_end = (
-                                variant_type_offsets
-                            )
-                            add_type(
-                                cas,
-                                lab_mention_type,
-                                local_variant_type_begin + cas_sentence.begin,
-                                local_variant_type_end + cas_sentence.begin,
-                            )
+        variant_type = (
+            add_type(
+                cas,
+                lab_mention_type,
+                mention.variant_type[0] + sentence_begin,
+                mention.variant_type[1] + sentence_begin,
+            )
+            if mention.variant_type is not None
+            else None
+        )
+
+        if gene is None:
+            raise ValueError(f"Bad mention without gene {mention}")
+        if syntax_n is not None:
+            create_relation(
+                cas=cas,
+                relation_type=ctakes_types.Relation,
+                category="syntax_n",
+                source=gene,
+                target=syntax_n,
+            )
+
+        if syntax_p is not None:
+            create_relation(
+                cas=cas,
+                relation_type=ctakes_types.Relation,
+                category="syntax_p",
+                source=gene,
+                target=syntax_p,
+            )
+        if vaf is not None:
+            create_relation(
+                cas=cas,
+                relation_type=ctakes_types.Relation,
+                category="vaf",
+                source=gene,
+                target=vaf,
+            )
+        if variant_type is not None:
+            create_relation(
+                cas=cas,
+                relation_type=ctakes_types.Relation,
+                category="variant_type",
+                source=gene,
+                target=variant_type,
+            )
+
+    def process(self, cas):
+        for sentence in self.get_annotated_sentences(cas):
+            mention = sentence.get("mention")
+            if not isinstance(mention, ClinGenMention):
+                raise ValueError(f"Bad mention {mention}")
+            sentence_offsets = sentence.get("offsets")
+            if (
+                sentence_offsets is None
+                or not isinstance(sentence_offsets, tuple)
+                and len(sentence_offsets) != 2
+            ):
+                raise ValueError(f"Bad offsets {sentence_offsets}")
+            sentence_begin, _ = sentence_offsets
+            ClinGenAnnotator.insert_clingen_mention(
+                cas=cas, mention=mention, sentence_begin=sentence_begin
+            )
