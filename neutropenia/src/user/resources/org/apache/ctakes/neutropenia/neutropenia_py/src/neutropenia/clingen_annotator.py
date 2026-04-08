@@ -8,7 +8,7 @@ from ctakes_pbj.type_system.ctakes_types import (
     DocumentPath,
     SignSymptomMention,
     LabMention,
-    Relation,
+    BinaryTextRelation,
 )
 from neutropenia_clingen_agents.agents.clingen_workflow import (
     quickstart,
@@ -68,7 +68,7 @@ class ClinGenAnnotator(CasAnnotator):
     ) -> None:
         sign_symptom_mention_type = cas.typesystem.get_type(SignSymptomMention)
         lab_mention_type = cas.typesystem.get_type(LabMention)
-        relation_type = cas.typesystem.get_type(Relation)
+        relation_type = cas.typesystem.get_type(BinaryTextRelation)
         gene = (
             add_type(
                 cas,
