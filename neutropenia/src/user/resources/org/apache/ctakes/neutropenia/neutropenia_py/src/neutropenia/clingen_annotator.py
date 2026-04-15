@@ -57,10 +57,14 @@ class ClinGenAnnotator(CasAnnotator):
                         raw_output=None,
                         mention=None,
                     )
-                    annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
-                    mention = annotated_sentence.get("mention")
-                    if mention is not None:
-                        yield annotated_sentence
+                    try:
+                        annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
+                        mention = annotated_sentence.get("mention")
+                        if mention is not None:
+                            yield annotated_sentence
+                    except Exception:
+                        print(f"Issue with sentence {raw_sentence} - skipping")
+                        logger.error("Issue with sentence %s - skipping", str(raw_sentence))
 
     @staticmethod
     def insert_clingen_mention(
