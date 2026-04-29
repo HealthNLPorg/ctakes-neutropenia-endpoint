@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.4
 FROM redhat/ubi9
 LABEL description="DeepPhe-Neutropenia Image"
 
@@ -32,21 +31,16 @@ RUN --mount=type=cache,target=/var/cache/dnf dnf upgrade -y && \
     dnf install -y which unzip java-17-openjdk java-17-openjdk-devel && \
     dnf install -y git python3.12 python3.12-pip && \
     ln -fs /usr/bin/python3.12 /usr/bin/python
-    # dnf install -y git python3.11 python3.11-pip && \
-    # ln -fs /usr/bin/python3.11 /usr/bin/python
 
-# RUN curl -fsSL https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz |
 RUN tar xzf apache-maven-3.8.6-bin.tar.gz -C /usr/share && \
     mv /usr/share/apache-maven-$MAVEN_VERSION /usr/share/maven && \
     ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
 RUN python -m pip install -U pip
-# RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 
-# RUN curl -LO https://archive.apache.org/dist/artemis/artemis/2.51.0/apache-artemis-2.51.0-bin.zip && \
 RUN	unzip apache-artemis-2.51.0-bin.zip && \
 	apache-artemis-2.51.0/bin/artemis create mybroker --user deepphe --password deepphe --allow-anonymous
-# RUN unzip apache-artemis-2.51.0-bin.zip && \
+
 WORKDIR /usr/src/app/neutropenia
 
 # Set environment variables for Java and Maven
