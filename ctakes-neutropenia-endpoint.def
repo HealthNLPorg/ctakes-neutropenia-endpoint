@@ -1,0 +1,38 @@
+Bootstrap: docker
+From: ubuntu:24.04
+%help
+  Build this with:
+  $ apptainer build ctakes-neutropenia-endpoint.sif ctakes-neutropenia-endpoint.def
+  Then:
+  $ apptainer run ctakes-neutropenia-endpoint.sif  # or ./ctakes-neutropenia-endpoint.sif
+%labels
+  AUTHOR_NAME Eli Goldner
+  AUTHOR_EMAIL eli.goldner@childrens.harvard.edu
+  VERSION 1.0
+%environment
+  export PATH=/opt/miniconda3/bin:${PATH}
+  # set system locale
+  export LC_ALL='C'
+%post -c /bin/bash
+  apt-get -y update && apt-get -y upgrade
+  apt-get -y install git openjdk-17-jdk maven curl python3.12 python3.12-pip unzip
+ 
+  INSTALL_SCRIPT=Miniconda3-py312_25.7.0-2-Linux-x86_64.sh
+  wget https://repo.anaconda.com/miniconda/${INSTALL_SCRIPT}
+  bash ${INSTALL_SCRIPT} -b -p /opt/miniconda3
+  rm ${INSTALL_SCRIPT}
+  /opt/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  /opt/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  /opt/miniconda3/bin/conda install pandas -c conda-forge -y
+  mkdir -p /opt/scripts && cd /opt/scripts
+  wget https://tigress-web.princeton.edu/CSES/jdh4/myscript.py
+  mkdir -p /opt/data && cd /opt/data
+  wget https://tigress-web.princeton.edu/CSES/jdh4/mydata.csv
+ 
+  # cleanup
+  apt-get -y autoremove --purge
+  apt-get -y clean
+%runscript
+  python /opt/scripts/myscript.py
+# %test
+#   /opt/miniconda3/bin/python --version
