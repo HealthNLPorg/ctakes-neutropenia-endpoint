@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: ubuntu:24.04
+From: redhat/ubi9
 %help
   Build this with:
   $ apptainer build ctakes-neutropenia-endpoint.sif ctakes-neutropenia-endpoint.def
@@ -9,31 +9,55 @@ From: ubuntu:24.04
   input /app/input
   output /app/output
   neutropenia /app/neutropenia
+  apache-artemis-2.51.0-bin.zip /app/apache-artemis-2.51.0-bin.zip
+  apache-maven-3.8.6-bin.tar.gz /app/apache-maven-3.8.6-bin.tar.gz
 %labels
   AUTHOR_NAME Eli Goldner
   AUTHOR_EMAIL eli.goldner@childrens.harvard.edu
   VERSION 1.0
 %environment
   export LC_ALL='C'
+  # export JAVA_HOME=/usr/lib/jvm/java
+  # export M2_HOME=/usr/share/maven
+  # export maven.home=$M2_HOME
+  # export M2=$M2_HOME/bin
+  # export PATH=$M2:$PATH
 %post -c /bin/bash
-  apt-get -y update && apt-get -y upgrade
-  apt-get -y install git openjdk-17-jdk maven curl python3.12 python3.12-pip unzip
+  cd /app
+
+  # System level
+  dnf upgrade -y
+  dnf install -y which unzip java-17-openjdk java-17-openjdk-devel
+  dnf install -y git python3.12 python3.12-pip
+
+  # Python setup
   ln -fs /usr/bin/python3.12 /usr/bin/python
   python -m pip install -U pip
-  cd /app
+
+  # Artemis
   unzip apache-artemis-2.51.0-bin.zip && apache-artemis-2.51.0/bin/artemis create mybroker --user deepphe --password deepphe --allow-anonymous
 
-  # cleanup
-  apt-get -y autoremove --purge
-  apt-get -y clean
+  # Maven
+  tar xzf apache-maven-3.8.6-bin.tar.gz -C /usr/share
+  mv /usr/share/apache-maven-3.8.6 /usr/share/maven
+  ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
+  ls /usr/share/maven
+
+  # Environment symbol updates
+  export JAVA_HOME=/usr/lib/jvm/java
+  export M2_HOME=/usr/share/maven
+  # export maven.home=$M2_HOME
+  export M2=$M2_HOME/bin
+  export PATH=$M2:$PATH
 
   # Install
   cd /app/neutropenia
   mvn -U clean package
+
 %runscript
-  exec java -cp /app/neutropenia/target/ctakes-neutropenia-endpoint-7.0.0-SNAPSHOT-jar-with-dependencies.jar \
-      org.apache.ctakes.core.pipeline.PiperFileRunner \
+  cd /app/neutropenia
+  java -cp target/ctakes-neutropenia-endpoint-7.0.0-SNAPSHOT-jar-with-dependencies.jar org.apache.ctakes.core.pipeline.PiperFileRunner \
       -p org/apache/ctakes/neutropenia/pipeline/ClingenAnnotator \
       -i /app/input \
       -o /app/output \
-      -a /app/mybroker -v ./test_venv/bin/python
+      -a /app/mybroker -v /usr/bin/python
