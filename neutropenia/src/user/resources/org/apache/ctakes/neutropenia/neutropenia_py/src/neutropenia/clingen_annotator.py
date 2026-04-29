@@ -1,5 +1,4 @@
-from typing import Any
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 import logging
 import os
 
@@ -10,6 +9,7 @@ from ctakes_pbj.type_system.ctakes_types import (
     LabMention,
     BinaryTextRelation,
 )
+from .validation import Validator
 from neutropenia_clingen_agents.agents.clingen_workflow import (
     quickstart,
 )
@@ -39,13 +39,15 @@ class ClinGenAnnotator(CasAnnotator):
     def __init__(
         self,
     ):
-        self.agentic_workflow = None
+        self.clingen_agent_workflow = None
+        self.validator = None
 
     def initialize(self):
-        self.agentic_workflow = quickstart()
+        self.clingen_agent_workflow = quickstart()
+        self.validator = Validator()
 
-    def get_annotated_sentences(self, cas) -> Iterable[Mapping[str, Any]]:
-        if self.agentic_workflow is None:
+    def get_annotated_sentences(self, cas) -> Iterable[Sentence]:
+        if self.clingen_agent_workflow is None:
             raise ValueError("LangGraph workflow not initialized")
         for section in cas.select(ctakes_types.Segment):
             section_id = getattr(section, "id", None)
@@ -58,13 +60,12 @@ class ClinGenAnnotator(CasAnnotator):
                         mention=None,
                     )
                     try:
-                        annotated_sentence = self.agentic_workflow.invoke(raw_sentence)
-                        mention = annotated_sentence.get("mention")
-                        if mention is not None:
-                            yield annotated_sentence
+                        yield self.clingen_agent_workflow.invoke(raw_sentence)
                     except Exception:
                         print(f"Issue with sentence {raw_sentence} - skipping")
-                        logger.error("Issue with sentence %s - skipping", str(raw_sentence))
+                        logger.error(
+                            "Issue with sentence %s - skipping", str(raw_sentence)
+                        )
 
     @staticmethod
     def insert_clingen_mention(
@@ -165,17 +166,10 @@ class ClinGenAnnotator(CasAnnotator):
 
     def process(self, cas):
         for sentence in self.get_annotated_sentences(cas):
-            mention = sentence.get("mention")
-            if not isinstance(mention, ClinGenMention):
-                raise ValueError(f"Bad mention {mention}")
-            sentence_offsets = sentence.get("offsets")
-            if (
-                sentence_offsets is None
-                or not isinstance(sentence_offsets, tuple)
-                and len(sentence_offsets) != 2
-            ):
-                raise ValueError(f"Bad offsets {sentence_offsets}")
-            sentence_begin, _ = sentence_offsets
-            ClinGenAnnotator.insert_clingen_mention(
-                cas=cas, mention=mention, sentence_begin=sentence_begin
-            )
+            mention = self.validator.parse_valid_clingen_mention(sentence)
+            if mention is not None:
+                sentence_offsets = sentence.offsets
+                sentence_begin, _ = sentence_offsets
+                ClinGenAnnotator.insert_clingen_mention(
+                    cas=cas, mention=mention, sentence_begin=sentence_begin
+                )
