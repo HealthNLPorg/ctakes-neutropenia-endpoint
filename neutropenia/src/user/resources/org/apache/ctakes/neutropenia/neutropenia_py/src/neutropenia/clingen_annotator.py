@@ -39,10 +39,13 @@ class ClinGenAnnotator(CasAnnotator):
     def __init__(
         self,
     ):
+        print("In __init__")
         self.agentic_workflow = None
 
     def initialize(self):
+        print("In initialize")
         self.agentic_workflow = quickstart()
+        print("Quickstart finished")
 
     def get_annotated_sentences(self, cas) -> Iterable[Mapping[str, Any]]:
         if self.agentic_workflow is None:
@@ -164,6 +167,7 @@ class ClinGenAnnotator(CasAnnotator):
             )
 
     def process(self, cas):
+        print("In process")
         for sentence in self.get_annotated_sentences(cas):
             mention = sentence.get("mention")
             if not isinstance(mention, ClinGenMention):
