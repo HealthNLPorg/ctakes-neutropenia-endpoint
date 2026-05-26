@@ -9,51 +9,38 @@ From: redhat/ubi9
   input /app/input
   output /app/output
   neutropenia /app/neutropenia
-  apache-artemis-2.51.0-bin.zip /app/apache-artemis-2.51.0-bin.zip
-  apache-maven-3.8.6-bin.tar.gz /app/apache-maven-3.8.6-bin.tar.gz
 %labels
   AUTHOR_NAME Eli Goldner
   AUTHOR_EMAIL eli.goldner@childrens.harvard.edu
-  VERSION 1.0
-%environment
-  export LC_ALL='C'
-  # export JAVA_HOME=/usr/lib/jvm/java
-  # export M2_HOME=/usr/share/maven
-  # export maven.home=$M2_HOME
-  # export M2=$M2_HOME/bin
-  # export PATH=$M2:$PATH
+  VERSION 0.1
 %post -c /bin/bash
+  echo "LC_ALL=en_US.UTF-8" >> /etc/environment
+  echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+  echo "LANG=en_US.UTF-8" > /etc/locale.conf
+  locale-gen en_US.UTF-8
+  export ARTEMIS_VERSION=2.53.0
   cd /app
 
-  # System level
   dnf upgrade -y
-  dnf install -y which unzip java-17-openjdk java-17-openjdk-devel
-  dnf install -y git python3.12 python3.12-pip
+  dnf install -y java-17-openjdk java-17-openjdk-devel maven unzip python3.12 python3.12-pip which git
 
-  # Python setup
+  Python setup
   ln -fs /usr/bin/python3.12 /usr/bin/python
   python -m pip install -U pip
 
   # Artemis
-  unzip apache-artemis-2.51.0-bin.zip && apache-artemis-2.51.0/bin/artemis create mybroker --user deepphe --password deepphe --allow-anonymous
-
-  # Maven
-  tar xzf apache-maven-3.8.6-bin.tar.gz -C /usr/share
-  mv /usr/share/apache-maven-3.8.6 /usr/share/maven
-  ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
-  ls /usr/share/maven
-
-  # Environment symbol updates
-  export JAVA_HOME=/usr/lib/jvm/java
-  export M2_HOME=/usr/share/maven
-  # export maven.home=$M2_HOME
-  export M2=$M2_HOME/bin
-  export PATH=$M2:$PATH
+  curl -LO https://archive.apache.org/dist/artemis/artemis/$ARTEMIS_VERSION/apache-artemis-$ARTEMIS_VERSION-bin.zip
+  unzip apache-artemis-$ARTEMIS_VERSION-bin.zip && apache-artemis-$ARTEMIS_VERSION/bin/artemis create mybroker --user deepphe --password deepphe --allow-anonymous
 
   # Install
   cd /app/neutropenia
   mvn -U clean package
-
+%environment
+  export JAVA_HOME=/usr/lib/jvm/java
+  export M2_HOME=/usr/share/maven
+  export maven.home=$M2_HOME
+  export M2=$M2_HOME/bin
+  export PATH=$M2:$PATH
 %runscript
   cd /app/neutropenia
   java -cp target/ctakes-neutropenia-endpoint-7.0.0-SNAPSHOT-jar-with-dependencies.jar org.apache.ctakes.core.pipeline.PiperFileRunner \

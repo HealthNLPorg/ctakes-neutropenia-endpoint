@@ -39,12 +39,16 @@ class ClinGenAnnotator(CasAnnotator):
     def __init__(
         self,
     ):
+
+        print("In __init__")
         self.clingen_agent_workflow = None
         self.validator = None
 
     def initialize(self):
+        print("In initialize")
         self.clingen_agent_workflow = quickstart()
         self.validator = Validator()
+        print("Quickstart finished")
 
     def get_annotated_sentences(self, cas) -> Iterable[Sentence]:
         if self.clingen_agent_workflow is None:
@@ -165,6 +169,7 @@ class ClinGenAnnotator(CasAnnotator):
             )
 
     def process(self, cas):
+        print("In process")
         for sentence in self.get_annotated_sentences(cas):
             mention = self.validator.parse_valid_clingen_mention(sentence)
             if mention is not None:
