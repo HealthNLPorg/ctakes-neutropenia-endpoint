@@ -5,7 +5,6 @@ from ctakes_pbj.pipeline.pbj_pipeline import PBJPipeline
 
 
 def main():
-    print("TESTING PIPELINE BUILDING PYTHON SIDE")
     pipeline = PBJPipeline()
     pipeline.reader(PBJReceiver())
     pipeline.add(ClinGenAnnotator())

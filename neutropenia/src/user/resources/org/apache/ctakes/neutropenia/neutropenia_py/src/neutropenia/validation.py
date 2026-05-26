@@ -101,16 +101,16 @@ class Validator:
     def get_validated_mention_json(
         sentence: Sentence, anchor: str, attributes: Collection[str]
     ) -> Mapping[str, tuple[int, int] | None] | None:
-        if sentence.raw_output is None:
+        if sentence["raw_output"] is None:
             return None
-        sample_dict = Validator.parse_json(sentence.raw_output)
+        sample_dict = Validator.parse_json(sentence["raw_output"])
         if sample_dict is None or len(sample_dict) == 0:
             return None
 
         return {
             attribute_name: Validator.select_non_hallucinatory_attribute(
                 attribute_name=attribute_name,
-                sample=sentence.sentence_string,
+                sample=sentence["sentence_string"],
                 sample_dict=sample_dict,
             )
             for attribute_name in prepend(anchor, attributes)
@@ -174,11 +174,11 @@ class Validator:
             vaf_str = (
                 None
                 if vaf_offsets is None
-                else sentence.sentence_string[vaf_offsets[0] : vaf_offsets[1]]
+                else sentence["sentence_string"][vaf_offsets[0] : vaf_offsets[1]]
             )
             variant_type = validated_mention_json.get("TYPE")
             return ClinGenMention(
-                source_text=sentence.sentence_string,
+                source_text=sentence["sentence_string"],
                 gene=anchor_value,
                 syntax_n=validated_mention_json.get("SYNTAX_N"),
                 syntax_p=validated_mention_json.get("SYNTAX_P"),
@@ -198,14 +198,14 @@ class Validator:
     def parse_sentence(
         sentence: Sentence, anchor: str, attributes: Collection[str]
     ) -> Sentence:
-        if sentence.raw_output is None:
+        if sentence["raw_output"] is None:
             raise ValueError("Sentence is missing raw output")
-        if sentence.mention is not None:
+        if sentence["mention"] is not None:
             raise ValueError("Sentence is already populated with mention")
         return Sentence(
-            offsets=sentence.offsets,
-            sentence_string=sentence.sentence_string,
-            raw_output=sentence.raw_output,
+            offsets=sentence["offsets"],
+            sentence_string=sentence["sentence_string"],
+            raw_output=sentence["raw_output"],
             mention=Validator.get_clingen_mention(
                 sentence=sentence,
                 anchor=anchor,
