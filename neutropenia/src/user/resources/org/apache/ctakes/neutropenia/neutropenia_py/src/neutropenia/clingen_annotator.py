@@ -129,7 +129,7 @@ class ClinGenAnnotator(CasAnnotator):
         )
 
         if gene is None:
-            raise ValueError(f"Bad mention without gene {mention}")
+            raise ValueError(f"Bad mention - missing gene {mention}")
         if syntax_n is not None:
             create_relation(
                 cas=cas,
