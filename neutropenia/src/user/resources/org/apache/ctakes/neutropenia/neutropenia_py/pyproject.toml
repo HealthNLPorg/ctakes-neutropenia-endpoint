@@ -38,6 +38,8 @@ dependencies = [
     "ty>=0.0.18",
     "ctakes-pbj~=7.0.0",
     "neutropenia-clingen-agents@git+https://github.com/HealthNLPorg/neutropenia_clingen_agents",
+    "pytz",
+    "tzlocal"
 ]
 
 [project.urls]
@@ -45,5 +47,5 @@ dependencies = [
 "Bug Tracker" = "https://www.w3.org/Provider/Style/dummy.html"
 
 [tool.uv.sources]
-# ctakes-pbj = { path = "/home/etg/Repos/ctakes/ctakes-pbj/src/user/resources/org/apache/ctakes/pbj/ctakes_pbj_py", editable = true }
+ctakes-pbj = { path = "/Users/etg/Repos/ctakes/ctakes-pbj/src/user/resources/org/apache/ctakes/pbj/ctakes_pbj_py", editable = true }
 # neutropenia-clingen-agents = { path = "/home/etg/Repos/neutropenia_clingen_agents", editable = true }

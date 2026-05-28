@@ -40,11 +40,14 @@ class ClinGenAnnotator(CasAnnotator):
         self,
     ):
         self.clingen_agent_workflow = None
-        self.validator = None
 
     def initialize(self):
         self.clingen_agent_workflow = quickstart()
         self.validator = Validator()
+        self.do_validation = (
+            True  # Want to make this a CLI argument when that's working again
+        )
+        self.output_dump_path = "./output_dump.jsonl"
 
     def get_annotated_sentences(self, cas) -> Iterable[Sentence]:
         if self.clingen_agent_workflow is None:
@@ -166,9 +169,22 @@ class ClinGenAnnotator(CasAnnotator):
 
     def process(self, cas):
         for sentence in self.get_annotated_sentences(cas):
-            mention = self.validator.parse_valid_clingen_mention(sentence)
+            mention = self.validator.parse_valid_clingen_mention(
+                sentence=sentence, do_validation=self.do_validation
+            )
             if mention is not None:
                 sentence_begin, _ = sentence["offsets"]
                 ClinGenAnnotator.insert_clingen_mention(
                     cas=cas, mention=mention, sentence_begin=sentence_begin
                 )
+                if self.output_dump_path is not None:
+                    with open(self.output_dump_path, mode="at") as f:
+                        f.write(
+                            Sentence(
+                                offsets=sentence.offsets,
+                                sentence_string=sentence.sentence_string,
+                                raw_output=sentence.raw_output,
+                                mention=mention,
+                            ).model_dump_json()
+                            + "\n"
+                        )

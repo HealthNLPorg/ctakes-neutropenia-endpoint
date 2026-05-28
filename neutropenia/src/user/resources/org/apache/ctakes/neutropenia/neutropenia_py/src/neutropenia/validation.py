@@ -155,8 +155,22 @@ class Validator:
 
     @staticmethod
     def get_clingen_mention(
-        sentence: Sentence, anchor: str, attributes: Collection[str]
+        sentence: Sentence,
+        anchor: str,
+        attributes: Collection[str],
+        do_validation: bool,
     ) -> ClinGenMention | None:
+        if not do_validation:
+            vaf_str = sentence.get("VAF")
+            return ClinGenMention(
+                source_text=sentence.get("sentence_string"),
+                gene=sentence.get("GENE"),
+                syntax_n=sentence.get("SYNTAX_N"),
+                syntax_p=sentence.get("SYNTAX_P"),
+                vaf=vaf_str,
+                variant_type=sentence.get("TYPE"),
+                heterozygous=Validator.is_heterozygous(vaf_str),
+            )
         validated_mention_json = Validator.get_validated_mention_json(
             sentence=sentence,
             anchor=anchor,
@@ -187,33 +201,12 @@ class Validator:
                 heterozygous=Validator.is_heterozygous(vaf_str),
             )
 
-    def parse_valid_clingen_mention(self, sentence: Sentence) -> ClinGenMention | None:
+    def parse_valid_clingen_mention(
+        self, sentence: Sentence, do_validation: bool
+    ) -> ClinGenMention | None:
         return Validator.get_clingen_mention(
             sentence=sentence,
             anchor=self.anchor,
             attributes=self.attributes,
-        )
-
-    @staticmethod
-    def parse_sentence(
-        sentence: Sentence, anchor: str, attributes: Collection[str]
-    ) -> Sentence:
-        if sentence["raw_output"] is None:
-            raise ValueError("Sentence is missing raw output")
-        if sentence["mention"] is not None:
-            raise ValueError("Sentence is already populated with mention")
-        return Sentence(
-            offsets=sentence["offsets"],
-            sentence_string=sentence["sentence_string"],
-            raw_output=sentence["raw_output"],
-            mention=Validator.get_clingen_mention(
-                sentence=sentence,
-                anchor=anchor,
-                attributes=attributes,
-            ),
-        )
-
-    def process_sentence(self, sentence: Sentence) -> Sentence:
-        return Validator.parse_sentence(
-            sentence=sentence, anchor=self.anchor, attributes=self.attributes
+            do_validation=do_validation,
         )
